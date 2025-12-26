@@ -1,0 +1,91 @@
+---
+title: "NVIDIA Isaac Sim: Photorealistic Simulation and Synthetic Data Generation"
+sidebar_label: 1. Isaac Sim
+---
+
+## Introduction to NVIDIA Isaac Sim
+
+NVIDIA Isaac Sim is a scalable and extensible robotics simulation application and synthetic data generation tool built on NVIDIA Omniverse. It provides a highly realistic, physically accurate, and GPU-accelerated environment for developing, testing, and training AI-powered robots. For humanoid robotics, Isaac Sim offers unparalleled advantages in:
+
+*   **Photorealistic Environments:** High-fidelity rendering makes simulations indistinguishable from reality, critical for visual perception tasks.
+*   **Physically Accurate Simulation:** Leveraging NVIDIA PhysX 5, Isaac Sim provides precise physics for complex robot dynamics, contacts, and environmental interactions.
+*   **Synthetic Data Generation (SDG):** Generate massive, diverse, and perfectly labeled datasets for training robust deep learning models, overcoming the limitations and costs of real-world data collection.
+*   **ROS 2 and Omniverse Ecosystem Integration:** Seamlessly connects with ROS 2 and the broader NVIDIA Omniverse platform for advanced workflows.
+*   **Realistic Humanoid Simulation:** Ability to import and simulate complex humanoid models with accurate joint limits, kinematics, and dynamics.
+
+## Setting Up Isaac Sim for Humanoid Robotics
+
+### Prerequisites
+
+*   An NVIDIA GPU (RTX series recommended for best performance).
+*   NVIDIA Omniverse Launcher installed.
+*   Isaac Sim installed via Omniverse Launcher.
+*   A working ROS 2 installation (e.g., Humble or Iron).
+
+### 1. Launch Isaac Sim
+
+Launch Isaac Sim from the NVIDIA Omniverse Launcher. This will open the Isaac Sim UI, which is built on USD (Universal Scene Description).
+
+### 2. Basic Scene Setup and Humanoid Import
+
+Let's create a simple scene and import a humanoid model. Isaac Sim often provides example humanoid models or allows easy import of URDFs/USDs.
+
+*   **Create a new stage**: `File -> New -> Empty Stage`.
+*   **Add a ground plane**: `Create -> Physics -> Ground Plane`.
+*   **Import a humanoid model**: Isaac Sim includes several robotic assets. You can often find them in `Window -> Content`. Look for a `franka_robot` or similar simple robot, or a provided humanoid example. For a real humanoid, you would import its USD or URDF/Xacro.
+
+    Alternatively, to import a URDF:
+    1.  Go to `Window -> Simulation -> URDF Importer`.
+    2.  Browse to your `simple_humanoid.urdf` (or a more complex humanoid URDF like one from `ros2_description` packages if available).
+    3.  Configure import options (e.g., merge fixed joints, create instanceable asset).
+    4.  Click "Import".
+
+### 3. Enabling Physics
+
+Ensure your imported humanoid and other scene elements have physics enabled.
+*   Select the humanoid's root prim (usually `/World/simple_humanoid`).
+*   In the `Property` tab on the right, ensure `Physics` is enabled. You can add a `Rigid Body` component if it's not present, which defines its mass, inertia, and other physics properties.
+*   Play the simulation (play button at the bottom of the viewport). The humanoid should react to gravity and interact with the ground plane.
+
+:::tip Understanding USD
+USD (Universal Scene Description) is the core scene description format used in Omniverse and Isaac Sim. It's a powerful framework for composing, rendering, and simulating 3D scenes. When you import a URDF, Isaac Sim converts it to USD prims.
+:::
+
+## Synthetic Data Generation (SDG)
+
+SDG is a game-changer for AI training. Instead of manually collecting and labeling real-world data, you can generate vast quantities of diverse and perfectly labeled data directly from the simulator. This is particularly useful for tasks like:
+*   **Object Detection:** Generating images of objects with perfect bounding boxes, segmentation masks, and 3D poses.
+*   **Human Pose Estimation:** Generating images of humanoids with perfectly labeled joint positions.
+*   **Anomaly Detection:** Creating rare scenarios that are difficult to capture in the real world.
+
+### Basic SDG Setup
+
+Isaac Sim provides tools for adding various annotators to your scene.
+
+*   **Add Annotators**:
+    1.  Select a camera in your scene (e.g., `RenderProduct` associated with your viewport camera, or a camera added to your robot).
+    2.  In the `Property` tab, under `Render Product`, click `Add Render Product`.
+    3.  You can then add annotators like `bounding_box_2d_tight`, `instance_segmentation`, `semantic_segmentation`, `depth`, etc.
+*   **Configure Recorder**:
+    1.  Go to `Window -> Simulation -> Data Recorder`.
+    2.  Configure the output directory and frame rate.
+    3.  Click `Start Recording`.
+*   **Generate Data**: Play the simulation, move the robot/camera, or randomize scene elements. The recorder will save images and corresponding annotations.
+
+### Domain Randomization
+
+To make your trained models robust to real-world variations, you can use **Domain Randomization**. Isaac Sim allows you to randomize various aspects of your scene during simulation, such as:
+*   **Object textures and colors.**
+*   **Lighting conditions.**
+*   **Object positions and orientations.**
+*   **Camera parameters.**
+
+This forces your AI model to learn general features rather than memorizing specific simulation details, improving its transferability to real robots.
+
+## Exercise: Generate Humanoid Pose Data
+
+Import a humanoid model (if one is available in Isaac Sim's assets that can be animated). Set up a camera and add `instance_segmentation` and `bounding_box_2d_tight` annotators. If the humanoid can be animated (e.g., through simple joint control or pre-recorded motions), record a short sequence and generate synthetic data for bounding boxes and instance segmentation. Imagine how this data could be used to train a vision model to detect and track humanoids.
+
+## Conclusion
+
+NVIDIA Isaac Sim is an indispensable tool for developing humanoid robotics with AI. Its photorealistic rendering, physically accurate simulation, and powerful synthetic data generation capabilities significantly accelerate the development and training of perception and control systems. By mastering Isaac Sim, you gain the ability to create robust AI models that can generalize from simulation to the complex real world of humanoid robots. In the next chapter, we will explore Isaac ROS, which brings hardware-accelerated ROS 2 packages to this powerful platform.

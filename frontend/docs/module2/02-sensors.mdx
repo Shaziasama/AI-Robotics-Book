@@ -1,0 +1,268 @@
+---
+title: "Simulating Sensors: LiDAR, Depth Cameras, and IMUs"
+sidebar_label: 2. Sensors
+---
+
+## The Robot's Perception: Simulated Sensors
+
+For a humanoid robot to interact intelligently with its environment, it needs to perceive its surroundings. In a simulated environment like Gazebo, we can attach virtual sensors to our robot models that mimic the behavior of real-world hardware. This allows us to develop and test perception algorithms long before deploying them on a physical robot.
+
+This chapter will focus on simulating three common types of sensors crucial for robotics:
+*   **LiDAR (Light Detection and Ranging):** For distance measurements and 2D/3D mapping.
+*   **Depth Cameras (e.g., Intel RealSense, Microsoft Azure Kinect):** For rich 3D information (color + depth).
+*   **IMU (Inertial Measurement Unit):** For orientation and acceleration data.
+
+## Simulating a LiDAR Sensor
+
+LiDAR sensors provide a dense cloud of distance measurements, typically used for obstacle detection, localization, and mapping (SLAM). Gazebo has a powerful LiDAR plugin.
+
+### 1. Add LiDAR to URDF
+
+We'll add a simplified 2D LiDAR to the head of our `simple_humanoid.urdf`.
+Add the following `<link>` and `<joint>` for the LiDAR, and then the `<gazebo>` extension for the plugin.
+
+```xml
+<?xml version="1.0"?>
+<robot name="simple_humanoid">
+  <!-- ... existing base_link and upper_arm_link ... -->
+
+  <link name="lidar_link">
+    <inertial>
+      <mass value="0.01"/>
+      <origin xyz="0 0 0"/>
+      <inertia ixx="0.000001" ixy="0" ixz="0" iyy="0.000001" iyz="0" izz="0.000001"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.02" length="0.03"/></geometry>
+      <material name="black"><color rgba="0 0 0 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.02" length="0.03"/></geometry>
+    </collision>
+  </link>
+
+  <joint name="lidar_joint" type="fixed">
+    <origin xyz="0 0 0.15" rpy="0 0 0"/> <!-- Position relative to a "head" link or base_link -->
+    <parent link="base_link"/> <!-- Attach to base_link for simplicity, ideally a head link -->
+    <child link="lidar_link"/>
+  </joint>
+
+  <!-- Gazebo plugin for LiDAR -->
+  <gazebo reference="lidar_link">
+    <sensor name="lidar_sensor" type="ray">
+      <pose>0 0 0 0 0 0</pose>
+      <visualize>true</visualize>
+      <update_rate>10</update_rate>
+      <ray>
+        <scan>
+          <horizontal>
+            <samples>360</samples>
+            <resolution>1</resolution>
+            <min_angle>-3.14159265359</min_angle> <!-- -180 degrees -->
+            <max_angle>3.14159265359</max_angle>  <!-- +180 degrees -->
+          </horizontal>
+        </scan>
+        <range>
+          <min>0.1</min>
+          <max>10.0</max>
+          <resolution>0.01</resolution>
+        </range>
+      </ray>
+      <plugin name="gazebo_ros_ray_sensor_controller" filename="libgazebo_ros_ray_sensor.so">
+        <ros>
+          <argument>~/out:=scan</argument>
+          <namespace>/simple_humanoid</namespace>
+        </ros>
+        <output_type>sensor_msgs/LaserScan</output_type>
+        <frame_name>lidar_link</frame_name>
+      </plugin>
+    </sensor>
+  </gazebo>
+</robot>
+```
+
+### 2. Relaunch Gazebo and Verify Topic
+
+```bash
+cd my_humanoid_ws
+colcon build
+source install/setup.bash
+
+ros2 launch humanoid_bringup spawn_humanoid.launch.py
+```
+
+After launching, open a new terminal and check for the `scan` topic:
+
+```bash
+ros2 topic list
+# You should see /simple_humanoid/scan
+ros2 topic echo /simple_humanoid/scan
+```
+
+You should see `sensor_msgs/msg/LaserScan` messages being published, containing distance readings.
+
+:::info Visualizing LaserScan in RViz
+You can visualize the laser scan data in RViz2. Launch `rviz2`, add a `LaserScan` display, and set its topic to `/simple_humanoid/scan` and its `Fixed Frame` to `lidar_link`.
+:::
+
+## Simulating a Depth Camera
+
+Depth cameras provide both color (RGB) and depth information, crucial for object recognition, 3D reconstruction, and human pose estimation. Gazebo can simulate these using the `depth_camera` sensor type.
+
+### 1. Add Depth Camera to URDF
+
+Add the following to your `simple_humanoid.urdf`:
+
+```xml
+  <!-- ... existing links and joints ... -->
+
+  <link name="camera_link">
+    <inertial>
+      <mass value="0.01"/>
+      <origin xyz="0 0 0"/>
+      <inertia ixx="0.000001" ixy="0" ixz="0" iyy="0.000001" iyzt="0" izz="0.000001"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box><size>0.02 0.05 0.05</size></box></geometry>
+      <material name="green"><color rgba="0 0.8 0 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box><size>0.02 0.05 0.05</size></box></geometry>
+    </collision>
+  </link>
+
+  <joint name="camera_joint" type="fixed">
+    <origin xyz="0 0 0.2" rpy="0 0 0"/> <!-- Position relative to base_link -->
+    <parent link="base_link"/>
+    <child link="camera_link"/>
+  </joint>
+
+  <!-- Gazebo plugin for Depth Camera -->
+  <gazebo reference="camera_link">
+    <sensor name="depth_camera_sensor" type="depth_camera">
+      <always_on>true</always_on>
+      <visualize>true</visualize>
+      <update_rate>10</update_rate>
+      <camera name="simple_camera">
+        <horizontal_fov>1.047</horizontal_fov> <!-- 60 degrees -->
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.1</near>
+          <far>10.0</far>
+        </clip>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>0.007</stddev>
+        </noise>
+      </camera>
+      <plugin name="depth_camera_controller" filename="libgazebo_ros_depth_camera.so">
+        <ros>
+          <argument>rgb/image_raw:=rgb/image_raw</argument>
+          <argument>rgb/camera_info:=rgb/camera_info</argument>
+          <argument>depth/image_raw:=depth/image_raw</argument>
+          <argument>depth/camera_info:=depth/camera_info</argument>
+          <namespace>/simple_humanoid/camera</namespace>
+        </ros>
+        <frame_name>camera_link</frame_name>
+      </plugin>
+    </sensor>
+  </gazebo>
+```
+
+### 2. Relaunch Gazebo and Verify Topics
+
+```bash
+ros2 launch humanoid_bringup spawn_humanoid.launch.py
+```
+
+Check for new topics:
+```bash
+ros2 topic list
+# You should see:
+# /simple_humanoid/camera/rgb/image_raw (sensor_msgs/msg/Image)
+# /simple_humanoid/camera/depth/image_raw (sensor_msgs/msg/Image)
+# ... and camera_info topics
+```
+
+:::tip Visualizing Image Topics
+Use `rqt_image_view` to visualize image streams from Gazebo.
+```bash
+ros2 run rqt_image_view rqt_image_view
+```
+Select the `/simple_humanoid/camera/rgb/image_raw` or `/simple_humanoid/camera/depth/image_raw` topic.
+:::
+
+## Simulating an IMU Sensor
+
+An IMU (Inertial Measurement Unit) provides linear acceleration and angular velocity, critical for robot localization, stabilization, and control.
+
+### 1. Add IMU to URDF
+
+Add the following to your `simple_humanoid.urdf`, typically attached to a central link like `base_link`:
+
+```xml
+  <!-- ... existing links and joints ... -->
+
+  <!-- Gazebo plugin for IMU -->
+  <gazebo reference="base_link"> <!-- Attach to base_link -->
+    <sensor name="imu_sensor" type="imu">
+      <always_on>true</always_on>
+      <update_rate>100</update_rate>
+      <visualize>false</visualize>
+      <imu>
+        <orientation_reference_frame>map</orientation_reference_frame>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>2e-4</stddev>
+          <rate_mean>0.0</rate_mean>
+          <rate_stddev>2e-4</rate_stddev>
+          <accel_mean>0.0</accel_mean>
+          <accel_stddev>0.017</accel_stddev>
+        </noise>
+      </imu>
+      <plugin name="gazebo_ros_imu_sensor_controller" filename="libgazebo_ros_imu_sensor.so">
+        <ros>
+          <argument>~/out:=imu</argument>
+          <namespace>/simple_humanoid</namespace>
+        </ros>
+        <frame_name>base_link</frame_name>
+        <initial_orientation_as_reference>false</initial_orientation_as_reference>
+      </plugin>
+    </sensor>
+  </gazebo>
+</robot>
+```
+
+### 2. Relaunch Gazebo and Verify Topic
+
+```bash
+ros2 launch humanoid_bringup spawn_humanoid.launch.py
+```
+
+Check for the `imu` topic:
+
+```bash
+ros2 topic list
+# You should see /simple_humanoid/imu
+ros2 topic echo /simple_humanoid/imu
+```
+
+You should see `sensor_msgs/msg/Imu` messages being published with orientation (quaternion), angular velocity, and linear acceleration data.
+
+## Exercise: Configure Sensor Noise
+
+Modify the noise parameters for the LiDAR, Depth Camera, and IMU sensors in their respective Gazebo plugins within your URDF. Experiment with different `stddev` values (standard deviation for Gaussian noise). Observe how increased noise affects the sensor data you echo or visualize. How might this impact a robot's perception algorithms?
+
+## Conclusion
+
+Simulated sensors are the eyes, ears, and balance systems of our digital twin robots. By understanding how to integrate and configure LiDAR, depth cameras, and IMUs in Gazebo, you gain crucial insights into a robot's perception capabilities and limitations. This lays the groundwork for developing robust perception stacks that can handle real-world complexities. Next, we will explore integrating these simulations into a high-fidelity environment using Unity.

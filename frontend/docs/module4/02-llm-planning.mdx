@@ -1,0 +1,181 @@
+---
+title: "Cognitive Planning: Using LLMs to Translate Natural Language into ROS 2 Actions"
+sidebar_label: 2. LLM Planning
+---
+
+## The Rise of Large Language Models (LLMs) in Robotics
+
+Large Language Models (LLMs) have revolutionized natural language processing, demonstrating remarkable capabilities in understanding, generating, and reasoning with human language. Their ability to interpret complex instructions, infer intent, and generate coherent responses makes them an incredibly powerful tool for robotic cognitive planning. Instead of explicitly programming every robot action, we can now use LLMs to translate high-level natural language commands into a sequence of executable robot actions within the ROS 2 framework.
+
+### Why LLMs for Robot Planning?
+
+*   **Semantic Understanding:** LLMs can bridge the gap between human language and robot-executable commands, understanding nuances and context that rule-based systems struggle with.
+*   **Flexibility:** Robots can adapt to new, unforeseen commands without extensive re-programming.
+*   **Cognitive Reasoning:** LLMs can perform basic reasoning, allowing them to break down complex tasks into simpler sub-tasks.
+*   **Learning from Human Feedback:** Potentially, LLMs can learn from human corrections and demonstrations to improve their planning capabilities.
+
+## Architecture: LLM to ROS 2 Action Pipeline
+
+The core idea is to create a pipeline where natural language instructions are processed by an LLM, which then generates a structured, robot-executable plan. This plan is then translated into ROS 2 actions (e.g., publishing `Twist` messages, calling services, or executing predefined behaviors).
+
+```mermaid
+graph TD
+    A[Human Voice Command] --> B(Whisper: Speech-to-Text)
+    B --> C[LLM Planner Node (ROS 2)]
+    C -- "ROS 2 Action Request (JSON/YAML)" --> D[Action Executor Node (ROS 2)]
+    D -- "ROS 2 Commands (Twist, Service Calls)" --> E[Robot Control Nodes]
+```
+
+### Key Components:
+
+1.  **Speech-to-Text:** OpenAI Whisper (from previous chapter) converts voice commands to text.
+2.  **LLM Planner Node:** A ROS 2 node that sends the transcribed text to an LLM (local or API) and parses the LLM's response into a structured plan.
+3.  **Action Executor Node:** A ROS 2 node that takes the structured plan and executes the corresponding ROS 2 actions.
+4.  **Robot Control Nodes:** Existing ROS 2 nodes responsible for low-level robot control (e.g., navigation, manipulation, locomotion).
+
+## Tutorial: Building an LLM Planner Node
+
+We will create a ROS 2 node that takes natural language commands (published by the Whisper node) and, using a simulated LLM call (or a real one if you have API access), generates a dummy ROS 2 action.
+
+### Prerequisites
+
+*   A working ROS 2 installation.
+*   Python 3.8+ with `pip`.
+*   Whisper node (from previous chapter) running and publishing to `/voice_commands`.
+*   Basic understanding of how to interact with an LLM API (e.g., OpenAI, Google Gemini, Hugging Face). For this tutorial, we will simulate the LLM response.
+
+### 1. Create a ROS 2 Package for LLM Integration
+
+```bash
+mkdir -p llm_planner_ws/src
+cd llm_planner_ws/src
+ros2 pkg create --build-type ament_python llm_action_planner
+cd ../..
+colcon build
+source install/setup.bash
+```
+
+### 2. Implement the LLM Planner Node (`llm_planner_node.py`)
+
+This node will subscribe to `/voice_commands`, simulate an LLM call, and publish a structured action plan.
+
+Create `llm_action_planner/llm_action_planner/llm_planner_node.py`:
+
+```python
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String
+import json # For structured output
+
+# --- Configuration ---
+INPUT_TOPIC = "/voice_commands"
+OUTPUT_TOPIC = "/robot_action_plan"
+# --- End Configuration ---
+
+class LLMActionPlanner(Node):
+    def __init__(self):
+        super().__init__('llm_action_planner')
+        self.subscription = self.create_subscription(
+            String,
+            INPUT_TOPIC,
+            self.voice_command_callback,
+            10)
+        self.subscription  # prevent unused variable warning
+        self.publisher_ = self.create_publisher(String, OUTPUT_TOPIC, 10)
+        self.get_logger().info(f'LLM Action Planner node started, subscribing to {INPUT_TOPIC} and publishing to {OUTPUT_TOPIC}.')
+
+    def simulate_llm_response(self, command_text):
+        # In a real application, this would be an API call to an LLM
+        # The LLM would be prompted to output a structured JSON/YAML plan
+        # Example prompt:
+        # "You are a robot assistant. Translate the following human command into a JSON action plan.
+        # Possible actions are: MOVE_FORWARD(distance_m), TURN(angle_deg), STOP(), GRASP(object_id).
+        # Command: {command_text}"
+
+        command_text_lower = command_text.lower()
+        action_plan = {"action": "UNKNOWN", "parameters": {}}
+
+        if "move forward" in command_text_lower:
+            distance = 1.0 # Default distance
+            if "meter" in command_text_lower:
+                try:
+                    words = command_text_lower.split()
+                    idx = words.index("meter")
+                    if idx > 0 and words[idx-1].isdigit():
+                        distance = float(words[idx-1])
+                except ValueError:
+                    pass
+            action_plan = {"action": "MOVE_FORWARD", "parameters": {"distance_m": distance}}
+        elif "turn left" in command_text_lower:
+            action_plan = {"action": "TURN", "parameters": {"angle_deg": 90}}
+        elif "turn right" in command_text_lower:
+            action_plan = {"action": "TURN", "parameters": {"angle_deg": -90}}
+        elif "stop" in command_text_lower:
+            action_plan = {"action": "STOP", "parameters": {}}
+        elif "grasp" in command_text_lower or "pick up" in command_text_lower:
+            object_name = "unknown_object"
+            # Simple heuristic to extract object name
+            if "grasp the" in command_text_lower:
+                object_name = command_text_lower.split("grasp the")[-1].strip().split()[0]
+            action_plan = {"action": "GRASP", "parameters": {"object_id": object_name}}
+        
+        return json.dumps(action_plan)
+
+    def voice_command_callback(self, msg):
+        self.get_logger().info(f"Received voice command: '{msg.data}'")
+        llm_response_json = self.simulate_llm_response(msg.data)
+        
+        plan_msg = String()
+        plan_msg.data = llm_response_json
+        self.publisher_.publish(plan_msg)
+        self.get_logger().info(f"Published action plan: '{llm_response_json}'")
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = LLMActionPlanner()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+Update `llm_action_planner/setup.py` in the `entry_points` section:
+
+```python
+'console_scripts': [
+    'llm_planner_node = llm_action_planner.llm_planner_node:main',
+],
+```
+
+### 3. Build and Run
+
+```bash
+cd llm_planner_ws
+colcon build
+source install/setup.bash
+
+# In one terminal, run the Whisper node (from previous chapter)
+ros2 run whisper_voice_commander whisper_node
+
+# In another terminal, run the LLM Planner node
+ros2 run llm_action_planner llm_planner_node
+
+# In a third terminal to listen to action plans
+ros2 topic echo /robot_action_plan
+```
+
+Speak commands like "Robot move forward 2 meters", "Turn right", "Stop", "Grasp the red ball" into your microphone. You should see the Whisper node transcribing, and the LLM Planner node publishing a corresponding JSON action plan.
+
+:::tip Integrating with Real LLMs
+To integrate with a real LLM API (e.g., OpenAI, Google Gemini), replace the `simulate_llm_response` function with actual API calls. Ensure you handle API keys securely (e.g., using environment variables) and manage rate limits and network latency. Consider using an LLM that is fine-tuned for generating structured outputs in JSON or YAML.
+:::
+
+## Exercise: Enhancing the Action Executor
+
+Create a simple "Action Executor" ROS 2 node. This node should subscribe to `/robot_action_plan`. When it receives a plan, it should parse the JSON and based on the `action` field, publish a corresponding `geometry_msgs/Twist` message to `/cmd_vel` for `MOVE_FORWARD` and `TURN` actions (similarly to your humanoid walking controller from Module 3), and print a message for `STOP` and `GRASP` actions. This executor would be the final bridge to your robot's low-level controllers.
+
+## Conclusion
+
+Large Language Models are transforming how we interact with robots, enabling them to understand and execute complex natural language commands. By creating a pipeline that translates speech into structured action plans, we empower humanoid robots with a new level of cognitive capability. This brings us one step closer to truly autonomous and intelligent systems. In the next and final chapter, we will bring all these components together in a Capstone Project to create an autonomous humanoid.

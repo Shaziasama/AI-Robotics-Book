@@ -1,0 +1,136 @@
+---
+title: High-Fidelity Rendering and Human-Robot Interaction in Unity
+sidebar_label: 3. Unity Integration
+---
+
+## Beyond Gazebo: High-Fidelity Simulation with Unity
+
+While Gazebo excels at physics-based simulation for robotics, its rendering capabilities are often sufficient but not photorealistic. For tasks requiring advanced visual fidelity, realistic human-robot interaction, or complex scene authoring, **Unity** stands out as a powerful alternative. Unity, a popular real-time 3D development platform, can be integrated with ROS 2 to create high-fidelity robot simulations.
+
+### Why Unity for Robotics?
+
+*   **Photorealistic Rendering:** Create visually stunning environments for realistic sensor data generation and compelling demonstrations.
+*   **Rich Asset Ecosystem:** Access a vast marketplace of 3D models, textures, and environments to build complex scenes quickly.
+*   **Advanced Human-Robot Interaction (HRI):** Simulate human gestures, expressions, and behaviors to test HRI algorithms.
+*   **Cross-Platform Deployment:** Develop simulations that can run on various platforms, from desktop to VR/AR.
+*   **ROS 2 Integration:** The `Unity Robotics Hub` provides robust tools for connecting Unity simulations with ROS 2, allowing seamless communication between your Unity robot and ROS 2 nodes.
+
+## Setting Up Unity for ROS 2 Robotics
+
+### Prerequisites
+
+*   Unity Hub and a Unity Editor version (e.g., Unity 2022.3 LTS).
+*   A working ROS 2 installation (e.g., Humble or Iron).
+*   Basic understanding of Unity's interface (GameObjects, Components, Scenes).
+
+### 1. Install Unity Robotics Hub
+
+The Unity Robotics Hub is a collection of Unity packages, tutorials, and resources for developing robotic applications in Unity.
+
+*   **Create a new Unity project:**
+    Open Unity Hub, click "New Project", select a 3D Core template, and give it a name (e.g., `HumanoidUnitySim`).
+*   **Install ROS-TCP-Connector and ROS-TCP-Endpoint:**
+    In Unity Editor, go to `Window > Package Manager`.
+    Click the `+` icon in the top-left, then `Add package from git URL...`.
+    Add `https://github.com/Unity-Technologies/ROS-TCP-Connector.git?path=/com.unity.robotics.ros-tcp-connector`
+    Then, add `https://github.com/Unity-Technologies/ROS-TCP-Endpoint.git?path=/com.unity.robotics.ros-tcp-endpoint`
+*   **Install ROS-Visualizations (Optional but Recommended):**
+    Add `https://github.com/Unity-Technologies/ROS-Visualizations.git?path=/com.unity.robotics.visualizations`
+
+### 2. Configure ROS 2 Workspace for Unity Communication
+
+On your ROS 2 machine (can be the same as your Unity development machine, or a separate one):
+
+*   **Install `ros-tcp-endpoint` ROS 2 package:**
+    ```bash
+    sudo apt update
+    sudo apt install ros-<your-ros2-distro>-ros-tcp-endpoint
+    ```
+*   **Launch the ROS TCP Endpoint:**
+    This ROS 2 node acts as a bridge, allowing Unity (which uses TCP) to communicate with the ROS 2 graph.
+    ```bash
+    ros2 launch ros_tcp_endpoint endpoint.launch.py
+    ```
+
+### 3. Basic ROS 2 Publisher from Unity
+
+Let's create a simple Unity script that publishes a ROS 2 string message.
+
+*   **In Unity Editor:**
+    1.  Create an empty GameObject (e.g., `ROSConnector`).
+    2.  Add a new C# script to `ROSConnector` (e.g., `SimplePublisher`).
+    3.  Open `SimplePublisher.cs` and add the following:
+
+```csharp
+using UnityEngine;
+using Unity.Robotics.ROSTCPConnector;
+using RosMessageTypes.Std; // For StringMsg
+
+public class SimplePublisher : MonoBehaviour
+{
+    public ROSConnection ros;
+    public string TopicName = "unity_chatter";
+    public float PublishMessageInterval = 1f;
+
+    private float timeElapsed = 0f;
+
+    void Start()
+    {
+        ros = ROSConnection.Get</div>
+<div data-lang="csharp" data-hide-header="true">
+        ros.RegisterPublisher<StringMsg>(TopicName);
+    }
+
+    void Update()
+    {
+        timeElapsed += Time.deltaTime;
+        if (timeElapsed > PublishMessageInterval)
+        {
+            StringMsg msg = new StringMsg($"Hello from Unity! Time: {Time.time}");
+            ros.Publish(TopicName, msg);
+            Debug.Log($"Published: {msg.data}");
+            timeElapsed = 0;
+        }
+    }
+}
+```
+
+*   **Back in Unity Editor:**
+    1.  Select the `ROSConnector` GameObject.
+    2.  In the Inspector, assign the `ROS Connection` component (which is automatically added when `ROS-TCP-Connector` is installed) to the `ROS` field of your `SimplePublisher` script.
+    3.  Set `TopicName` to `unity_chatter` and `PublishMessageInterval` to `1`.
+    4.  Press Play in the Unity Editor.
+
+*   **In a ROS 2 terminal:**
+    ```bash
+    ros2 topic echo /unity_chatter
+    ```
+    You should see messages published from Unity.
+
+## Simulating Human-Robot Interaction
+
+Unity's advanced rendering and animation capabilities make it ideal for simulating realistic human-robot interaction. You can import high-fidelity human models, animate them, and integrate their actions with your ROS 2 robot controls.
+
+### Concepts for HRI in Unity
+
+*   **Human Avatars:** Use rigged 3D human models (e.g., from Unity Asset Store, Mixamo).
+*   **Animation Systems:** Drive human movements using Mecanim animation system, inverse kinematics (IK), or motion capture data.
+*   **Perception Modules:** Implement modules that detect human presence, gestures, or gaze (using simulated cameras and AI).
+*   **Communication:** ROS 2 topics/services can relay human state from Unity to the robot's control stack and vice-versa.
+
+### Example: Simple Human Avatar & Robot Co-presence
+
+1.  **Import a Human Model:** Find a simple humanoid model (e.g., a low-poly character) and import it into your Unity project. Drag it into your scene.
+2.  **Position Robot and Human:** Place your simulated robot (e.g., the simple humanoid you might have imported as a URDF into Unity) and the human avatar in the same scene.
+3.  **Basic Animation (Optional):** Add a simple idle animation to the human avatar.
+4.  **Simulate Interaction:** Imagine a scenario where the robot moves toward the human. Your ROS 2 robot navigation node (from Module 1 or upcoming modules) would publish velocity commands. In Unity, the robot model would move. Concurrently, a "human observer" script in Unity could publish the human's position to ROS 2, allowing the robot to adjust its path.
+
+## Exercise: Unity-ROS 2 Two-Way Communication
+
+Extend the `SimplePublisher` script in Unity to also subscribe to a ROS 2 topic (e.g., `/robot_status`) and change the color of a Unity GameObject (e.g., a light or a material on your robot model) based on the received message. Simultaneously, modify your ROS 2 robot control node (from Module 1 or a dummy node) to publish `std_msgs/msg/String` messages to `/robot_status` (e.g., "IDLE", "MOVING", "ERROR").
+
+## Conclusion & Teaser for Module 3
+
+Integrating Unity with ROS 2 unlocks a new dimension of simulation, offering high-fidelity rendering and sophisticated human-robot interaction capabilities. This extends our "digital twin" beyond mere physics to include realistic visual and social contexts, critical for developing truly intelligent and empathetic humanoid robots.
+
+In **Module 3: The AI-Robot Brain (NVIDIA Isaac™)**, we will dive into more advanced simulation platforms and AI integration, specifically exploring NVIDIA Isaac Sim for photorealistic environments and synthetic data generation, and Isaac ROS for hardware-accelerated perception and navigation. This will bring us closer to building the intelligent core of our autonomous humanoid.

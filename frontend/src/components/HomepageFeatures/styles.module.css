@@ -1,0 +1,41 @@
+.features {
+  display: flex;
+  align-items: center;
+  padding: 2rem 0;
+  width: 100%;
+}
+
+.featureImg {
+  height: 150px; /* Adjusted height for better fit */
+  width: 150px; /* Adjusted width for better fit */
+  margin-bottom: 1rem;
+  border-radius: 8px; /* Rounded corners for images */
+  object-fit: cover; /* Ensure image covers the area */
+  transition: transform 0.3s ease;
+}
+
+.featureCard:hover .featureImg {
+  transform: scale(1.05); /* Slight zoom on image when card is hovered */
+}
+
+.featureCard {
+  background: linear-gradient(135deg, #7c3aed, #06b6d4); /* Gradient background for cards */
+  border-radius: var(--docusaurus-card-border-radius); /* Use Docusaurus theme variable */
+  padding: 1.5rem;
+  margin: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  text-decoration: none; /* Remove underline from links */
+  color: white; /* Ensure text is readable on dark gradient */
+  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transition for hover effects */
+  height: 100%; /* Ensure cards take full height in a row */
+}
+
+.featureCard:hover {
+  transform: translateY(-5px) scale(1.05); /* Lift and enlarge on hover as requested */
+  box-shadow: 0 0 25px #8b5cf6; /* Enhanced shadow on hover as requested */
+  text-decoration: none; /* Ensure no underline on hover */
+  color: white; /* Ensure text color remains white on hover */
+}
