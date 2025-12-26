@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkfrontend=globalThis.webpackChunkfrontend||[]).push([[472],{5513(e){e.exports=JSON.parse('{"title":"Recent posts","items":[{"title":"Welcome","permalink":"/AI-Robotics-Book/blog/welcome","unlisted":false,"date":"2025-12-26T13:41:58.000Z"}]}')}}]);

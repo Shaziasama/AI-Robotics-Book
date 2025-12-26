@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkfrontend=globalThis.webpackChunkfrontend||[]).push([[525],{9345(o){o.exports=JSON.parse('{"tags":[{"label":"welcome","permalink":"/AI-Robotics-Book/blog/tags/welcome","count":1},{"label":"blog","permalink":"/AI-Robotics-Book/blog/tags/blog","count":1}]}')}}]);

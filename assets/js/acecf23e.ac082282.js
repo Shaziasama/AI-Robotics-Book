@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkfrontend=globalThis.webpackChunkfrontend||[]).push([[903],{1912(o){o.exports=JSON.parse('{"blogBasePath":"/AI-Robotics-Book/blog","blogTitle":"Blog","authorsListPath":"/AI-Robotics-Book/blog/authors"}')}}]);
