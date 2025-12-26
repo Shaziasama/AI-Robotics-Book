@@ -100,6 +100,13 @@
 - **[Entity 1]**: [What it represents, key attributes without implementation]
 - **[Entity 2]**: [What it represents, relationships to other entities]
 
+## Constitutional Alignment *(mandatory)*
+
+- **Accuracy**: How will the feature ensure technical correctness and verifiability?
+- **Clarity**: How will the feature be presented clearly to the educational audience?
+- **Reproducibility**: How will users be able to reproduce the results or examples provided in this feature?
+- **Technical Rigor**: How does this feature adhere to the project's established tools and best practices?
+
 ## Success Criteria *(mandatory)*
 
 <!--

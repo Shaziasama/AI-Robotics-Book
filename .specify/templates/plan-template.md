@@ -17,21 +17,27 @@
   the iteration process.
 -->
 
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [single/web/mobile - determines source structure]  
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Language/Version**: [e.g., Python 3.11, TypeScript 5.x or NEEDS CLARIFICATION]
+**Primary Dependencies**: Docusaurus, FastAPI, Neon Serverless Postgres, Qdrant, ROS 2, NVIDIA Isaac Sim, Gazebo/Unity, Spec-Kit Plus
+**Storage**: Neon Serverless Postgres (metadata/storage), Qdrant Cloud (vector database)
+**Testing**: [e.g., pytest, Vitest. Must ensure reproducibility as per constitution.]
+**Target Platform**: Docusaurus on GitHub Pages, Simulation environments (ROS 2, Isaac Sim, etc.)
+**Project Type**: Web Application (Docusaurus Frontend + FastAPI Backend)
+**Performance Goals**: [e.g., RAG chatbot p95 latency <1s, Book page load <500ms or NEEDS CLARIFICATION]
+**Constraints**: No paid tiers beyond free options unless explicitly approved.
+**Scale/Scope**: Covers defined modules; chatbot handles queries on book content.
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- [ ] **Accuracy**: Is all technical content verifiable against official documentation or reproducible results?
+- [ ] **Clarity**: Is the content clear for the target audience (students/practitioners)? Does it meet the Flesch-Kincaid grade level target?
+- [ ] **Reproducibility**: Are all examples, code, and simulations runnable by readers?
+- [ ] **Technical Rigor**: Does the plan adhere to the established tools and best practices (ROS 2, NVIDIA Isaac, RAG systems, Spec-Kit Plus)?
+- [ ] **Platform Constraints**: Does the plan use Docusaurus and GitHub Pages for the book?
+- [ ] **Backend Constraints**: Does the plan use FastAPI, Neon, and Qdrant for the RAG backend?
+- [ ] **Scope Constraints**: Does the plan stay within the defined content modules?
 
 ## Project Structure
 

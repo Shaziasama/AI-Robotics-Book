@@ -16,14 +16,13 @@ description: "Task list template for feature implementation"
 
 - **[P]**: Can run in parallel (different files, no dependencies)
 - **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3)
-- Include exact file paths in descriptions
+- Include exact file paths in descriptions.
+- **Ensure each task upholds constitution**: Accuracy, Clarity, Reproducibility.
 
 ## Path Conventions
 
-- **Single project**: `src/`, `tests/` at repository root
-- **Web app**: `backend/src/`, `frontend/src/`
-- **Mobile**: `api/src/`, `ios/src/` or `android/src/`
-- Paths shown below assume single project - adjust based on plan.md structure
+- **Web app**: `book/` (Docusaurus frontend), `api/src/` (FastAPI backend), `simulations/`
+- Paths shown below assume this structure - adjust based on plan.md.
 
 <!-- 
   ============================================================================
@@ -88,11 +87,11 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Implementation for User Story 1
 
-- [ ] T012 [P] [US1] Create [Entity1] model in src/models/[entity1].py
-- [ ] T013 [P] [US1] Create [Entity2] model in src/models/[entity2].py
-- [ ] T014 [US1] Implement [Service] in src/services/[service].py (depends on T012, T013)
-- [ ] T015 [US1] Implement [endpoint/feature] in src/[location]/[file].py
-- [ ] T016 [US1] Add validation and error handling
+- [ ] T012 [P] [US1] Create Docusaurus component in `book/src/components/[ComponentName].js` (ensure clarity for educational audience)
+- [ ] T013 [P] [US1] Define data model for [Entity] in `api/src/models/[model].py`
+- [ ] T014 [US1] Implement FastAPI endpoint in `api/src/endpoints/[endpoint].py` (ensure code is clean, commented, and reproducible)
+- [ ] T015 [US1] Add endpoint validation and clear error handling
+- [ ] T016 [US1] Write clear, step-by-step documentation for the new component in `book/docs/...`
 - [ ] T017 [US1] Add logging for user story 1 operations
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
